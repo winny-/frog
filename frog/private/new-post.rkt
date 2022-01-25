@@ -1,11 +1,14 @@
 #lang at-exp racket/base
 
 (require racket/require
-         (multi-in racket (contract date format system))
+         (multi-in racket (contract date file format string system))
+         scribble/reader
          threading
          "params.rkt"
          "paths.rkt"
-         (only-in "util.rkt" display-to-file*))
+         (only-in "util.rkt"
+                  display-to-file*)
+         "verbosity.rkt")
 
 (provide new-post)
 
@@ -38,35 +41,52 @@
              (path->string pathname)
              (current-editor-command)))))
 
+(define-namespace-anchor anc)
+(define (render text-body title date)
+  (eval `(let ([title ,title]
+               [date ,date])
+          (string-join (list ,@text-body) ""))
+        (namespace-anchor->namespace anc)))
+
 (define (new-markdown title date)
-  @~a{    Title: @title
+  (cond
+    [(file-exists? "post-template.md")
+     (prn1 "Using post-template.md")
+     (render (call-with-input-file "post-template.md" read-inside) title date)]
+    [else
+     @~a{Title: @title
+         Date: @date
+         Tags: DRAFT
+
+         _Replace this with your post text. Add one or more comma-separated
+         Tags above. The special tag `DRAFT` will prevent the post from being
+         published._
+
+         <!-- more -->
+
+
+         }]))
+
+(define (new-scribble title date)
+  (cond
+    [(file-exists? "post-scribble.scrbl")
+     (prn1 "Using post-scribble.scrbl")
+     (render (call-with-input-file "post-template.scrbl" read-inside) title date)]
+    [else
+     @~a{#lang scribble/manual
+
+          Title: @title
           Date: @date
           Tags: DRAFT
 
-      _Replace this with your post text. Add one or more comma-separated
-      Tags above. The special tag `DRAFT` will prevent the post from being
-      published._
+          Replace this with your post text. Add one or more comma-separated
+          Tags above. The special tag `DRAFT` will prevent the post from being
+          published.
 
-      <!-- more -->
-
-
-      })
-
-(define (new-scribble title date)
-  @~a{#lang scribble/manual
-
-      Title: @title
-      Date: @date
-      Tags: DRAFT
-
-      Replace this with your post text. Add one or more comma-separated
-      Tags above. The special tag `DRAFT` will prevent the post from being
-      published.
-
-      <!-- more -->
+          <!-- more -->
 
 
-      })
+          }]))
 
 (define (get-editor . _)
   (or (getenv "EDITOR") (getenv "VISUAL")
