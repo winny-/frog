@@ -204,7 +204,7 @@
   ;; Now let's traverse the source files to build `new-posts`.
   (define (on-file path type new-posts)
     (define-values (_ name __) (split-path path))
-    (when (and (eq? type 'file)
+    (when (and (memq type '(file link))
                (regexp-match? post-file-px name))
       (define old-post (hash-ref old-posts path #f))
       (cond [;; If the post exists in `old-posts` and its modified

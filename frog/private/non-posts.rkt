@@ -45,7 +45,7 @@
 (define (write-non-post-page path type v)
   (let/ec return
     (define-values (path-to name __) (split-path path))
-    (unless (and (eq? type 'file)
+    (unless (and (memq type '(file link))
                  (regexp-match? non-post-file-px path)
                  (not (regexp-match? post-file-px (path->string name))))
       (return v))
