@@ -11,6 +11,7 @@
          "read-scribble.rkt"
          "stale.rkt"
          "template.rkt"
+         "params.rkt"
          (except-in "util.rkt" path-get-extension)
          "verbosity.rkt"
          "xexpr2text.rkt")
@@ -73,8 +74,18 @@
              (parse-markdown text)])
           enhance-body))
     (prn1 "Generating non-post ~a" (abs->rel/www dest-path))
+    (define (f v)
+      (render-template
+       (src-path)
+       "non-post-template.html"
+       (hasheq
+        'uri-prefix  (or (current-uri-prefix) "")
+        'uri-path    uri-path
+        'full-uri    (full-uri uri-path)
+        'content     v)))
     (~> xs
         xexprs->string
+        f
         (bodies->page #:title (make-title xs path)
                       #:description (xexprs->description xs)
                       #:uri-path uri-path)
